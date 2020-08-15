@@ -1,0 +1,46 @@
+version: "3"
+
+services:
+  db:
+    image: "postgres:alpine"
+    container_name: "db"
+    environment:
+      - POSTGRES_USER=py
+      - POSTGRES_DB=users
+      - POSTGRES_PASSWORD=password
+    ports:
+      - 5432:5432
+    networks:
+      - server_net
+
+  pyserver-node:
+    image: "pyserver"
+    depends_on:
+      - db
+    environment:
+      - DB_USER=py
+      - DB_PASSWORD=password
+      - DB_NAME=users
+      - DB_HOST=db
+      - DB_PORT=5432
+    expose:
+      - "5000"
+    restart: always
+    networks:
+      - server_net
+
+  pyserver:
+    image: nginx:alpine
+    container_name: "server-lb"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - pyserver-node
+    restart: always
+    ports:
+      - "5000:5000"
+    networks:
+      - server_net
+
+networks:
+    server_net:
