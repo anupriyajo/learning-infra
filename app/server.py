@@ -41,8 +41,6 @@ def migrate():
     cur.close()
     conn.close()
 
-migrate()
-
 @app.route("/", methods=["GET"])
 def health():
     return "ok"
@@ -101,4 +99,5 @@ def delete_users(id):
 
 
 if __name__ == "__main__":
+    migrate()
     app.run("0.0.0.0", 5000)
