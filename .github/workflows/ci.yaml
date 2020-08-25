@@ -15,5 +15,7 @@ jobs:
           python-version: "3.8"
       - name: Install dependencies
         run: pip3 install -r requirements.txt && pip3 install -r requirements-test.txt
+      - name: Start postgres container
+        run: docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=password -e POSTGRES_USER=py -e POSTGRES_DB=users --rm postgres:alpine
       - name: Run tests
         run: py.test test
