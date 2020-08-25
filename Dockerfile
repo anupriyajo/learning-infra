@@ -4,7 +4,8 @@ RUN \
  apk add --no-cache postgresql-libs && \
  apk add --no-cache gcc musl-dev postgresql-dev
 
-RUN pip3 install psycopg2 Flask gunicorn
+COPY requirements.txt .
+RUN pip3 install -r requirements.txt
 COPY app app
 COPY wsgi.py .
 
