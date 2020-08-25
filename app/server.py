@@ -41,6 +41,7 @@ def migrate():
     cur.close()
     conn.close()
 
+
 @app.route("/", methods=["GET"])
 def health():
     return "ok"
