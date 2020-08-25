@@ -3,15 +3,17 @@ name: Test_Deploy
 on: [push]
 
 jobs:
-    test:
-        runs_on :ubuntu-latest
+  test:
+    runs_on: ubuntu-latest
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@2
-            - name: Setup Python
-              uses: actions/setup-python@2
-              with:
-                python_version: "3.8"
-            -name: Install dependencies
-
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@2
+      - name: Setup Python
+        uses: actions/setup-python@2
+        with:
+          python_version: "3.8"
+      - name: Install dependencies
+        run: pip3 install -r requirements.txt
+      - name: Run tests
+        run: py.test test
