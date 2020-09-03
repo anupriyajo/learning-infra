@@ -1,7 +1,8 @@
+import os
+
 import flask
 import psycopg2
-import os
-from flask import request, jsonify
+from flask import jsonify, request
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
@@ -78,7 +79,8 @@ def add_users():
         # close communication with the database
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
+        print(f"failed to save user: {error}")
+        return jsonify({"error": error}), 400
     finally:
         conn.close()
 
