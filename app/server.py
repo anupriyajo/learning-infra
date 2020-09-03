@@ -78,7 +78,7 @@ def add_users():
         conn.commit()
         # close communication with the database
         cur.close()
-    except (Exception, psycopg2.DatabaseError) as error:
+    except Exception as error:
         print(f"failed to save user: {error}")
         return jsonify({"error": str(error)}), 400
     finally:
@@ -90,13 +90,20 @@ def add_users():
 @app.route("/users/<id>", methods=["DELETE"])
 def delete_users(id):
     sql = "DELETE FROM users WHERE id=%s RETURNING id"
-    conn = connect()
-    cur = conn.cursor()
-    cur.execute(sql, (int(id),))
-    id = cur.fetchone()[0]
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        conn = connect()
+        cur = conn.cursor()
+        cur.execute(sql, (int(id),))
+        id = cur.fetchone()
+        if not id:
+            return jsonify({"error": "user not found"}), 404
+        conn.commit()
+        cur.close()
+    except Exception as error:
+        print(f"failed to delete user: {error}")
+        return jsonify({"error": str(error)}), 500
+    finally:
+        conn.close()
 
     return jsonify({"id": id})
 

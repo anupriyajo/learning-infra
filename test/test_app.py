@@ -38,3 +38,16 @@ def test_add_users_failure():
             response_data = response.get_json()
             assert "error" in response_data
             assert "id" not in response_data
+
+
+def test_delete_non_existent_users():
+    with server.app.app_context():
+        server.migrate()
+
+        with server.app.test_client() as c:
+            response = c.delete("/users/1")
+            assert 404 == response.status_code
+            response_data = response.get_json()
+            assert "error" in response_data
+            assert "user not found" == response_data["error"]
+
