@@ -51,3 +51,16 @@ def test_delete_non_existent_users():
             assert "error" in response_data
             assert "user not found" == response_data["error"]
 
+
+def test_delete_existing_users():
+    with server.app.app_context():
+        server.migrate()
+
+        with server.app.test_client() as c:
+            response = c.post("/users", json={"name": "sanu"})
+            id = response.get_json()["id"]
+            response = c.delete(f"/users/{id}")
+            assert 200 == response.status_code
+            response_data = response.get_json()
+            assert "id" in response_data
+            assert id == response_data["id"]

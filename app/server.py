@@ -105,7 +105,7 @@ def delete_users(id):
     finally:
         conn.close()
 
-    return jsonify({"id": id})
+    return jsonify({"id": id[0]})
 
 
 if __name__ == "__main__":
