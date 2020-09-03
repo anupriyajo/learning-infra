@@ -80,7 +80,7 @@ def add_users():
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
         print(f"failed to save user: {error}")
-        return jsonify({"error": error}), 400
+        return jsonify({"error": str(error)}), 400
     finally:
         conn.close()
 

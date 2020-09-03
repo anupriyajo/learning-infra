@@ -1,4 +1,3 @@
-import json
 from app import server
 
 
@@ -14,7 +13,7 @@ def test_empty_users():
             response = c.get("/users")
             assert 200 == response.status_code
 
-            assert [] == json.loads(response.data)
+            assert [] == response.get_json()
 
 
 def test_add_users():
@@ -27,3 +26,15 @@ def test_add_users():
             response_data = response.get_json()
             assert "id" in response_data
             c.delete(f"/users/{response_data['id']}")
+
+
+def test_add_users_failure():
+    with server.app.app_context():
+        server.migrate()
+
+        with server.app.test_client() as c:
+            response = c.post("/users", json={"manu": "sanu"})
+            assert 400 == response.status_code
+            response_data = response.get_json()
+            assert "error" in response_data
+            assert "id" not in response_data
