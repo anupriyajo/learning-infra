@@ -8,12 +8,15 @@ app = flask.Flask(__name__)
 app.config["DEBUG"] = True
 
 migrations = [
-    """
+    {
+        "up": """
     CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL
     );
-    """
+    """,
+        "down": "DROP TABLE IF EXISTS users;",
+    }
 ]
 
 
@@ -31,11 +34,10 @@ def connect():
         print("Error while connecting to PostgreSQL", error)
 
 
-def migrate():
+def migrate(down=False):
     conn = connect()
-
     cur = conn.cursor()
-    for migration in migrations:
+    for migration in map(lambda m: m["down"] if down else m["up"], migrations):
         print(f"Running migration: {migration}")
         cur.execute(migration)
     conn.commit()

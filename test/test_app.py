@@ -15,6 +15,8 @@ def test_empty_users():
 
             assert [] == response.get_json()
 
+        server.migrate(down=True)
+
 
 def test_add_users():
     with server.app.app_context():
@@ -26,6 +28,8 @@ def test_add_users():
             response_data = response.get_json()
             assert "id" in response_data
             c.delete(f"/users/{response_data['id']}")
+
+        server.migrate(down=True)
 
 
 def test_add_users_failure():
@@ -39,6 +43,8 @@ def test_add_users_failure():
             assert "error" in response_data
             assert "id" not in response_data
 
+        server.migrate(down=True)
+
 
 def test_delete_non_existent_users():
     with server.app.app_context():
@@ -50,6 +56,8 @@ def test_delete_non_existent_users():
             response_data = response.get_json()
             assert "error" in response_data
             assert "user not found" == response_data["error"]
+
+        server.migrate(down=True)
 
 
 def test_delete_existing_users():
@@ -64,3 +72,15 @@ def test_delete_existing_users():
             response_data = response.get_json()
             assert "id" in response_data
             assert id == response_data["id"]
+
+        server.migrate(down=True)
+
+
+def test_delete_error():
+    with server.app.test_client() as c:
+        response = c.delete("/users/1")
+        assert 500 == response.status_code
+        assert "error" in response.get_json()
+
+    server.migrate(down=True)
+
