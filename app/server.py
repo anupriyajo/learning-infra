@@ -1,12 +1,10 @@
 import os
+import asyncpg
+from sanic import Sanic
+from sanic.response import json
 
-import flask
-import psycopg2
-from flask import jsonify, request
-
-app = flask.Flask(__name__)
-app.config["DEBUG"] = True
-
+app = Sanic(__name__)
+# TODO: share the db connection pool and run migration only once at start of server
 migrations = [
     {
         "up": """
@@ -20,96 +18,71 @@ migrations = [
 ]
 
 
-def connect():
-    try:
-        env = os.environ
-        return psycopg2.connect(
-            user=env.get("DB_USER", "py"),
-            password=env.get("DB_PASSWORD", "password"),
-            host=env.get("DB_HOST", "127.0.0.1"),
-            port=env.get("DB_PORT", "5432"),
-            database=env.get("DB_NAME", "users"),
-        )
-    except (Exception, psycopg2.Error) as error:
-        print("Error while connecting to PostgreSQL", error)
-
-
-def migrate(down=False):
-    conn = connect()
-    cur = conn.cursor()
+async def migrate(down=False):
     for migration in map(lambda m: m["down"] if down else m["up"], migrations):
         print(f"Running migration: {migration}")
-        cur.execute(migration)
-    conn.commit()
-    cur.close()
-    conn.close()
+        await app.conn.execute(migration)
+
+
+@app.listener("before_server_start")
+async def setup_server(app, loop):
+    conn = await asyncpg.connect(
+        "postgresql://py@localhost:5432/users?password=password"
+    )
+    app.conn = conn
+    await migrate()
+
+
+@app.listener("after_server_stop")
+async def teardown_server(app, loop):
+    await app.conn.close()
 
 
 @app.route("/", methods=["GET"])
-def health():
-    return "ok"
+async def health(request):
+    return json({"message": "ok"})
 
 
 @app.route("/users", methods=["GET"])
-def users():
+async def users(request):
     sql = "SELECT * FROM users"
-    conn = connect()
-    cur = conn.cursor()
-    cur.execute(sql)
-    results = cur.fetchall()
-    users = list(map(lambda result: {"id": result[0], "name": result[1]}, results))
+    results = await app.conn.fetch(sql)
+    users = list(
+        map(lambda result: {"id": result["id"], "name": result["name"]}, results)
+    )
 
-    cur.close()
-    conn.close()
-
-    return jsonify(users)
+    return json(users)
 
 
 @app.route("/users", methods=["POST"])
-def add_users():
+async def add_users(request):
     sql = """INSERT INTO users(name)
-             VALUES(%s) RETURNING id;"""
+             VALUES($1) RETURNING id;"""
     try:
-        conn = connect()
-        cur = conn.cursor()
-        # execute the INSERT statement
-        cur.execute(sql, (request.json["name"],))
-        # get the generated id back
-        id = cur.fetchone()[0]
-        # commit the changes to the database
-        conn.commit()
-        # close communication with the database
-        cur.close()
+        result = await app.conn.fetchrow(sql, request.json["name"])
     except Exception as error:
         print(f"failed to save user: {error}")
-        return jsonify({"error": str(error)}), 400
-    finally:
-        conn.close()
+        return json({"error": str(error)}, status=400)
 
-    return jsonify({"id": id})
+    return json({"id": result["id"]})
 
 
 @app.route("/users/<id>", methods=["DELETE"])
-def delete_users(id):
-    sql = "DELETE FROM users WHERE id=%s RETURNING id"
+async def delete_users(request, id):
+    sql = "DELETE FROM users WHERE id=$1 RETURNING id"
     try:
-        conn = connect()
-        cur = conn.cursor()
-        cur.execute(sql, (int(id),))
-        id = cur.fetchone()
-        if not id:
-            return jsonify({"error": "user not found"}), 404
-        conn.commit()
-        cur.close()
+        result = await app.conn.fetchrow(sql, int(id))
+        if not result:
+            return json({"error": "user not found"}, status=404)
     except Exception as error:
         print(f"failed to delete user: {error}")
-        return jsonify({"error": str(error)}), 500
-    finally:
-        conn.close()
-
-    return jsonify({"id": id[0]})
+        return json({"error": str(error)}, status=500)
+    return json({"id": result["id"]})
 
 
 if __name__ == "__main__":
-    migrate()
-    app.run("0.0.0.0", 5000)
+    app.run(host="0.0.0.0", port=5000, workers=os.cpu_count() + 1)
+
+# change the hardcode of port
+# change docker file entryoint
+# make the infra
