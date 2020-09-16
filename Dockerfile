@@ -7,6 +7,5 @@ RUN \
 COPY requirements.txt .
 RUN pip3 install -r requirements.txt
 COPY app app
-COPY wsgi.py .
 
-ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app"]
+ENTRYPOINT ["python3", "app/server.py"]
