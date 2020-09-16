@@ -17,6 +17,12 @@ migrations = [
     }
 ]
 
+db_user = os.environ.get("DB_USER", "py")
+db_host = os.environ.get("DB_HOST", "localhost")
+db_port = os.environ.get("DB_PORT", "5432")
+db_password = os.environ.get("DB_PASSWORD", "password")
+db_name = os.environ.get("DB_NAME", "users")
+
 
 async def migrate(down=False):
     for migration in map(lambda m: m["down"] if down else m["up"], migrations):
@@ -27,7 +33,7 @@ async def migrate(down=False):
 @app.listener("before_server_start")
 async def setup_server(app, loop):
     conn = await asyncpg.connect(
-        "postgresql://py@localhost:5432/users?password=password"
+        f"postgresql://{db_user}@{db_host}:{db_port}/{db_name}?password={db_password}"
     )
     app.conn = conn
     await migrate()
