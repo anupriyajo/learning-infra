@@ -53,11 +53,11 @@ async def health(request):
 async def users(request):
     sql = "SELECT * FROM users"
     results = await app.conn.fetch(sql)
-    users = list(
+    users_list = list(
         map(lambda result: {"id": result["id"], "name": result["name"]}, results)
     )
 
-    return json(users)
+    return json(users_list)
 
 
 @app.route("/users", methods=["POST"])
@@ -89,6 +89,3 @@ async def delete_users(request, id):
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, workers=os.cpu_count() + 1)
 
-# change the hardcode of port
-# change docker file entryoint
-# make the infra
