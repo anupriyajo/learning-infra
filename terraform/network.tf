@@ -59,3 +59,15 @@ resource "aws_nat_gateway" "python_nat_gateway" {
     Name = "python-nat-gateway-${data.aws_availability_zones.zones.names[count.index]}"
   }
 }
+
+resource "aws_route_table" "python_route_table" {
+  count = var.az_count
+  vpc_id = aws_vpc.python-vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    nat_gateway_id = element(aws_nat_gateway.python_nat_gateway.*.id, count.index)
+  }
+  tags = {
+    Name = "python-route-table-${data.aws_availability_zones.zones.names[count.index]}"
+  }
+}
