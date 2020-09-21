@@ -44,8 +44,18 @@ resource "aws_route" "python_internet_access" {
 resource "aws_eip" "python_eip" {
   count = var.az_count
   vpc = true
-  depends_on = [aws_internet_gateway.python_gateway]
+  depends_on = [
+    aws_internet_gateway.python_gateway]
   tags = {
     Name = "python-eip-${data.aws_availability_zones.zones.names[count.index]}"
+  }
+}
+
+resource "aws_nat_gateway" "python_nat_gateway" {
+  count = var.az_count
+  allocation_id = element(aws_eip.python_eip.*.id, count.index)
+  subnet_id = element(aws_subnet.public.*.id, count.index)
+  tags = {
+    Name = "python-nat-gateway-${data.aws_availability_zones.zones.names[count.index]}"
   }
 }
