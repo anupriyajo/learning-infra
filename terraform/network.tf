@@ -40,3 +40,12 @@ resource "aws_route" "python_internet_access" {
   destination_cidr_block = "0.0.0.0/0"
   gateway_id = aws_internet_gateway.python_gateway.id
 }
+
+resource "aws_eip" "python_eip" {
+  count = var.az_count
+  vpc = true
+  depends_on = [aws_internet_gateway.python_gateway]
+  tags = {
+    Name = "python-eip-${data.aws_availability_zones.zones.names[count.index]}"
+  }
+}
