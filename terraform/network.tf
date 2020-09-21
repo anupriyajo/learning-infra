@@ -27,3 +27,10 @@ resource "aws_subnet" "public" {
     Name = "python-public-subnet"
   }
 }
+
+resource "aws_internet_gateway" "python_gateway" {
+  vpc_id = aws_vpc.python-vpc.id
+  tags = {
+    Name = "python-gateway"
+  }
+}
