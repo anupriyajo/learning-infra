@@ -71,3 +71,9 @@ resource "aws_route_table" "python_route_table" {
     Name = "python-route-table-${data.aws_availability_zones.zones.names[count.index]}"
   }
 }
+
+resource "aws_route_table_association" "python_private_association" {
+  count = var.az_count
+  route_table_id = element(aws_route_table.python_route_table.*.id, count.index)
+  subnet_id = element(aws_subnet.private.*.id, count.index)
+}
