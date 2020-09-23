@@ -24,3 +24,8 @@ resource "aws_security_group" "db_security_group" {
       "0.0.0.0/0"]
   }
 }
+
+resource "aws_db_subnet_group" "db_subnet_group" {
+  subnet_ids = aws_subnet.private.*.id
+  name       = "db-subnet-group"
+}
